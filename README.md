@@ -1,4 +1,4 @@
-# SavorApp - Complete Technical Documentation
+# ScrumpyApp - Complete Technical Documentation
 
 ## Table of Contents
 
@@ -22,11 +22,11 @@
 
 ## Executive Summary
 
-SavorApp (formerly VideotoRecipe) is a comprehensive iOS recipe management application that transforms cooking videos from social media platforms into structured, actionable recipes. The app combines AI-powered recipe extraction, intelligent meal planning, shopping list management, and ingredient analytics to create a complete cooking companion experience.
+ScrumpyApp (formerly VideotoRecipe) is a comprehensive iOS recipe management application that transforms cooking videos from social media platforms into structured, actionable recipes. The app combines AI-powered recipe extraction, intelligent meal planning, shopping list management, and ingredient analytics to create a complete cooking companion experience. Note that several portionss of this documentation may reference the name "Savor". This is a remnant of the app's previous name. The name is now officially Scrumpy, thought the Revenuecat entitlement is still called Savor.
 
 ### Primary Purpose
 
-- Extract structured recipes from video URLs (YouTube, TikTok, Instagram, Facebook)
+- Extract structured recipes from video URLs (TikTok, Instagram)
 - Generate recipes through conversational AI chatbot interface
 - Plan meals for the week with AI assistance
 - Manage shopping lists with Instacart integration
@@ -100,10 +100,7 @@ SavorApp (formerly VideotoRecipe) is a comprehensive iOS recipe management appli
 
 #### External APIs
 - **Instacart Developer Platform**: Recipe page creation, store availability
-- **Kroger Product API**: Product images via OAuth2
-- **Amazon Product Advertising API**: Product search (optional)
 - **Serper.dev**: Google Images search for ingredient photos
-- **USDA FoodData Central**: Nutrition database
 
 #### Video & Image Processing
 - **yt-dlp**: Video/audio download from multiple platforms
@@ -131,7 +128,7 @@ graph TB
     RevenueCat[RevenueCat<br/>Subscription Service]
     StoreKit[Apple StoreKit<br/>In-App Purchases]
     
-    ExternalAPIs[External APIs<br/>OpenAI, Instacart,<br/>Kroger, USDA, etc.]
+    ExternalAPIs[External APIs<br/>OpenAI, Instacart,<br/>Serper, etc.]
     
     iOSApp -->|HTTP Requests| BackendAPI
     iOSApp -->|Subscription Management| RevenueCat
@@ -336,7 +333,7 @@ The app includes two share extensions for seamless video URL sharing:
 
 The app uses `RecipeAPIClient` singleton for all backend communication:
 
-**Base URL:** `https://savorbackend.onrender.com`
+**Base URL:** `https://savorbackend.onrender.com
 
 **Key Methods:**
 
@@ -468,7 +465,6 @@ sequenceDiagram
     participant Cache as PostgreSQL Cache
     participant Video as Video Platform
     participant OpenAI as OpenAI API
-    participant USDA as USDA API
     participant Instacart as Instacart API
     
     Client->>API: POST /extract_recipe {url}
@@ -483,8 +479,6 @@ sequenceDiagram
         OpenAI-->>API: Transcript
         API->>OpenAI: Extract recipe (GPT-4o)
         OpenAI-->>API: Structured recipe
-        API->>USDA: Get nutrition data
-        USDA-->>API: Nutrition info
         API->>Instacart: Create shopping list
         Instacart-->>API: Shopping URL
         API->>Cache: Store recipe
@@ -603,13 +597,6 @@ Extract a structured recipe from a video URL.
       "quantity": "3",
       "unit": null,
       "grams": 60.0,
-      "amazon_url": "https://www.amazon.com/s?k=egg+yolks",
-      "amazon_product": {
-        "type": "search",
-        "search_url": "https://www.amazon.com/s?k=egg+yolks",
-        "product_name": "egg yolks",
-        "affiliate_link": "https://www.amazon.com/s?k=egg+yolks&tag=your-tag"
-      },
       "instacart_url": null,
       "image_url": "https://example.com/egg-yolks.jpg",
       "nutrition": {
@@ -775,11 +762,6 @@ Get product images for multiple ingredients.
       "image_source": "serper"
     },
     {
-      "name": "eggs",
-      "image_url": "https://example.com/eggs.jpg",
-      "image_source": "kroger"
-    },
-    {
       "name": "flour",
       "image_url": null,
       "image_source": "emoji"
@@ -792,7 +774,6 @@ Get product images for multiple ingredients.
 
 **Image Sources:**
 - `serper`: Serper.dev Google Images
-- `kroger`: Kroger Product API
 - `emoji`: Emoji fallback
 
 #### Get Single Ingredient Image
@@ -882,25 +863,6 @@ Wrapper around FastAPI endpoint with additional processing.
 
 **Request/Response:** Same as FastAPI `/create_instacart_list`
 
-#### Search Ingredient
-
-**POST** `/api/search-ingredient?ingredient={name}`
-
-Search for an ingredient on Amazon.
-
-**Query Parameters:**
-- `ingredient`: Ingredient name to search
-
-**Response:**
-```json
-{
-  "type": "search",
-  "search_url": "https://www.amazon.com/s?k=butter",
-  "product_name": "butter",
-  "affiliate_link": "https://www.amazon.com/s?k=butter&tag=your-tag"
-}
-```
-
 #### Get Ingredient Images (Next.js)
 
 **POST** `/api/get-ingredient-images`
@@ -963,36 +925,6 @@ Search for an ingredient on Amazon.
 - Store availability checking
 - Product search and matching
 
-### Kroger Product API
-
-**Purpose:** Fetch product images for ingredients
-
-**Configuration:**
-- Client ID: `KROGER_CLIENT_ID`
-- Client Secret: `KROGER_CLIENT_SECRET`
-- OAuth2 authentication with `product.compact` scope
-
-**Endpoints:**
-- `/v1/connect/oauth2/token`: OAuth2 token
-- `/v1/products`: Product search
-
-**Image Sizes:** thumbnail, small, medium, large, xlarge
-
-### Amazon Product Advertising API
-
-**Purpose:** Product search and affiliate links
-
-**Configuration:**
-- Access Key: `AMAZON_ACCESS_KEY`
-- Secret Key: `AMAZON_SECRET_KEY`
-- Associate Tag: `AMAZON_ASSOCIATE_TAG`
-- Region: `AMAZON_REGION` (default: "US")
-
-**Features:**
-- Product search URLs (free)
-- Optional: Full PA API integration for product details
-- Affiliate link generation
-
 ### Serper.dev
 
 **Purpose:** Google Images search for ingredient photos
@@ -1004,22 +936,6 @@ Search for an ingredient on Amazon.
 - Fast synchronous image search
 - High-quality product images
 - Fallback to emoji if no image found
-
-### USDA FoodData Central
-
-**Purpose:** Nutrition data lookup
-
-**Configuration:**
-- API Key: `USDA_API_KEY`
-
-**Endpoints:**
-- `/fdc/v1/foods/search`: Search foods
-- `/fdc/v1/food/{fdcId}`: Get food details
-
-**Features:**
-- Comprehensive nutrition database
-- AI-assisted food matching
-- Per-ingredient and per-serving nutrition calculation
 
 ### Google Gemini Vision API
 
@@ -1367,17 +1283,15 @@ Set all required environment variables in your deployment platform:
 ### Code Structure
 
 ```
-SavorBackend/
+ScrumpyBackend/
 ├── backend/
 │   ├── app.py              # Main FastAPI application
 │   ├── config.py           # Configuration management
 │   ├── database.py         # Database operations
 │   ├── instacart_api.py    # Instacart integration
-│   ├── kroger_api.py       # Kroger integration
-│   ├── amazon_api.py       # Amazon integration
 │   ├── ocr_helper.py       # OCR fallback
 │   └── ingredient_images.py # Image fetching
-├── savor-app/
+├── scrumpy-app/
 │   └── src/
 │       ├── app/api/        # Next.js API routes
 │       └── lib/            # Shared libraries
@@ -1408,7 +1322,7 @@ python example_client.py
 
 ### Overview
 
-SavorApp uses RevenueCat for subscription management, providing a unified interface for in-app purchases across iOS platforms. The implementation supports free and pro subscription tiers with monthly, yearly, and lifetime options.
+ScrumpyApp uses RevenueCat for subscription management, providing a unified interface for in-app purchases across iOS platforms. The implementation supports free and pro subscription tiers with monthly, yearly, and lifetime options.
 
 ### Architecture
 
@@ -1592,7 +1506,7 @@ override init() {
 - Limited chat conversations (10 per day)
 - 5 recipe extractions from videos per day
 
-#### Pro Tier (Savor Pro)
+#### Pro Tier (Scrumpy Pro)
 - Unlimited chat conversations
 - Unlimited recipe extraction features
 
@@ -1767,7 +1681,6 @@ final class Ingredient {
     var quantity: String?
     var unit: String?
     var grams: Double?
-    var amazonUrl: String?
     var instacartUrl: String?
     var imageURL: String?
 }
@@ -1912,7 +1825,7 @@ let recipes = try modelContext.fetch(descriptor)
 ### Project Structure
 
 ```
-SavorApp/
+ScrumpyApp/
 ├── VideotoRecipe/              # Main app target
 │   ├── Models/                 # Data models and services
 │   ├── Views/                  # SwiftUI views
@@ -1951,9 +1864,9 @@ SavorApp/
 
 3. **Configure Products**:
    - Create products in App Store Connect:
-     - Monthly subscription (e.g., `com.mazen.savorapp.pro.monthly`)
-     - Yearly subscription (e.g., `com.mazen.savorapp.pro.yearly`)
-     - Lifetime purchase (e.g., `com.mazen.savorapp.pro.lifetime`)
+     - Monthly subscription (e.g., `com.mazen.scrumpyapp.pro.monthly`)
+     - Yearly subscription (e.g., `com.mazen.scrumpyapp.pro.yearly`)
+     - Lifetime purchase (e.g., `com.mazen.scrumpyapp.pro.lifetime`)
    - Link products in RevenueCat dashboard
    - Create offering with all products
    - Set offering as "Current"
@@ -1972,7 +1885,7 @@ SavorApp/
 2. **Environment Variables** (Backend):
    - See [Backend Configuration](#backend-configuration) section for complete list
    - Required: `OPENAI_API_KEY`
-   - Optional: Database, Instacart, Kroger, etc.
+   - Optional: Database, Instacart, etc.
 
 ### Building and Running
 
@@ -2067,21 +1980,6 @@ Check Xcode console for:
 
 ---
 
-## Additional Resources
 
-### Documentation Files
-
-- **App Summary**: `APP_SUMMARY.md` - Feature overview and user workflows
-- **RevenueCat Pricing Guide**: `REVENUECAT_PRICING_UPDATE_GUIDE.md` - Pricing configuration
-- **RevenueCat Troubleshooting**: `REVENUECAT_TESTFLIGHT_TROUBLESHOOTING.md` - Common issues
-
-### External Resources
-
-- **RevenueCat Documentation**: https://docs.revenuecat.com
-- **SwiftData Documentation**: https://developer.apple.com/documentation/swiftdata
-- **SwiftUI Documentation**: https://developer.apple.com/documentation/swiftui
-- **Backend API**: https://savorbackend.onrender.com/docs (FastAPI Swagger UI)
-
----
 
 **Version**: 1.0.0
